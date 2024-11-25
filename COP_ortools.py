@@ -1,6 +1,9 @@
 from ortools.sat.python import cp_model
 import pandas as pd
 
+#Actual database
+# mealDB = pd.read_csv("mealDB.csv")
+
 # Sample meal database
 data = {
     'meal_id': [1, 2, 3, 4, 5, 6],
@@ -86,3 +89,4 @@ if status == cp_model.OPTIMAL or status == cp_model.FEASIBLE:
     print(f"Calorie Difference: {solver.Value(diff)}")
 else:
     print("No feasible solution found.")
+    
