@@ -7,7 +7,6 @@ data = {
     'calories': [500, 300, 400, 800, 200, 600],
     'cuisine': ['Italian', 'Mediterranean', 'Japanese', 'Italian', 'Asian', 'American'],
     'type': ['lunch', 'lunch', 'dinner', 'dinner', 'snack', 'breakfast'],
-    'temperature': ['hot', 'cold', 'cold', 'hot', 'hot', 'cold'],
     'vegetarian': [True, True, False, False, True, True]
 }
 
@@ -16,23 +15,20 @@ df = pd.DataFrame(data)
 
 # User constraints and preferences
 user_constraints = {
-    "max_calories_per_meal": 600,
+    "target_calories": 1500,
     "preferred_cuisines": ["Italian", "Japanese"],
     "meal_types": ["breakfast", "lunch", "dinner", "snack"],
-    "temperature_preference": "hot",
     "vegetarian_only": True
 }
 
 # Optimization weights
 weights = {
-    "cuisine_weight": 3,
-    "temperature_weight": 2
+    "cuisine_weight": 3
 }
 
 # Filter meals based on hard constraints
 def filter_meals(df, constraints):
     filtered_df = df[
-        (df['calories'] <= constraints["max_calories_per_meal"]) &
         (df['type'].isin(constraints["meal_types"])) &
         (df['vegetarian'] == constraints["vegetarian_only"])
     ]
@@ -45,14 +41,12 @@ def calculate_score(meal, constraints, weights):
     score = 0
     if meal['cuisine'] in constraints["preferred_cuisines"]:
         score += weights["cuisine_weight"]
-    if meal['temperature'] == constraints["temperature_preference"]:
-        score += weights["temperature_weight"]
     return score
 
 # Constraint optimization function
 def constraint_optimization(meals, meal_types, constraints, weights):
     best_plan = []
-    best_score = 0
+    best_score = float('inf')  # We minimize the absolute calorie difference
 
     # Helper function to check if a plan satisfies all constraints
     def is_valid_plan(plan):
@@ -60,20 +54,21 @@ def constraint_optimization(meals, meal_types, constraints, weights):
         return len(used_types) == len(meal_types)
 
     # Recursive function to explore all valid combinations
-    def explore(current_plan, remaining_meals, used_types, current_score):
+    def explore(current_plan, remaining_meals, used_types, current_calories, current_pref_score):
         nonlocal best_plan, best_score
 
         # If all meal types are used, check if this plan is optimal
         if len(used_types) == len(meal_types):
-            if current_score > best_score:
-                best_score = current_score
+            calorie_diff = abs(current_calories - constraints["target_calories"])
+            if calorie_diff < best_score:  # Minimize calorie difference
+                best_score = calorie_diff
                 best_plan = current_plan[:]
             return
 
         # Explore remaining meals
         for i, meal in enumerate(remaining_meals):
             if meal['type'] not in used_types:
-                # Calculate the score for the current meal
+                # Calculate the preference score for the current meal
                 meal_with_score = meal.copy()
                 meal_with_score['score'] = calculate_score(meal, constraints, weights)
 
@@ -82,14 +77,20 @@ def constraint_optimization(meals, meal_types, constraints, weights):
                 used_types.add(meal['type'])
 
                 # Recurse with updated plan and remaining meals
-                explore(current_plan, remaining_meals[i + 1:], used_types, current_score + meal_with_score['score'])
+                explore(
+                    current_plan,
+                    remaining_meals[i + 1:],
+                    used_types,
+                    current_calories + meal['calories'],
+                    current_pref_score + meal_with_score['score']
+                )
 
                 # Backtrack
                 current_plan.pop()
                 used_types.remove(meal['type'])
 
     # Start exploration with an empty plan
-    explore([], filtered_meals.to_dict('records'), set(), 0)
+    explore([], filtered_meals.to_dict('records'), set(), 0, 0)
 
     return best_plan, best_score
 
@@ -100,4 +101,5 @@ best_plan, best_score = constraint_optimization(filtered_meals, user_constraints
 best_plan_df = pd.DataFrame(best_plan)
 print("Best meal plan:")
 print(best_plan_df)
-print(f"Total Score: {best_score}")
+print(f"Total Calories: {best_plan_df['calories'].sum()} (Target: {user_constraints['target_calories']})")
+print(f"Total Score (Calorie Difference): {best_score}")
