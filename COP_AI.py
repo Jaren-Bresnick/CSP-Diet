@@ -6,17 +6,18 @@ data = {
     'meal_name': ['Pasta', 'Salad', 'Sushi', 'Pizza', 'Soup', 'Sandwich'],
     'calories': [500, 300, 400, 800, 200, 600],
     'cuisine': ['Italian', 'Mediterranean', 'Japanese', 'Italian', 'Asian', 'American'],
-    'type': ['lunch', 'lunch', 'dinner', 'dinner', 'snack', 'breakfast'],
-    'vegetarian': [True, True, False, False, True, True]
+    'type': ['lunch', 'lunch', 'dinner', 'dinner', 'lunch', 'breakfast'],
+    'vegetarian': [True, True, True, True, True, True]
 }
 
 # Convert data to a DataFrame
 df = pd.DataFrame(data)
+print(df)
 
 # User constraints and preferences
 user_constraints = {
     "target_calories": 1500,
-    "preferred_cuisines": ["Italian", "Japanese"],
+    "preferred_cuisines": ["Italian", "Japanese", "American"],
     "meal_types": ["breakfast", "lunch", "dinner"],  
     "vegetarian_only": True
 }
