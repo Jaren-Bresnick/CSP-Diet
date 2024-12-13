@@ -1,60 +1,293 @@
 
+# import os
+# import openai
+# from dotenv import load_dotenv #for the .env folder with the api key 
+# load_dotenv()
+# 
+# openai.api_key = os.getenv("OPENAI_API_KEY")
+# 
+# def get_food_suggestions(messages):
+#     #use chat gpt api for food suggestions 
+#     try:
+#         response = openai.chat.completions.create(
+#             model="gpt-4o",  #gpt-4 model
+#             messages=messages,
+#             max_tokens=150,
+#             temperature=0.7
+#         )
+#         return response.choices[0].message
+#     except Exception as e:
+#         return f"Error querying the API: {str(e)}"
+# 
+# def optimize_food_for_meal_llm(meal_targets, excluded_foods):
+#     #suggest meal that matches nutritional targets of the user (inclduing exlcuding certain foods the user does not want)
+#     messages = [
+#         {"role": "system", "content": "You are a helpful assistant that suggests meals based on nutritional targets and preferences."},
+#         {"role": "user", "content": f"Suggest a meal that matches the following nutritional targets:\n"
+#                                    f"- Calories: {meal_targets['calories']} kcal\n"
+#                                    f"- Protein: {meal_targets['protein']} grams\n"
+#                                    f"- Fat: {meal_targets['fat']} grams\n"
+#                                    f"- Carbs: {meal_targets['carbs']} grams\n"
+#                                    f"Exclude the following foods: {', '.join(excluded_foods)}.\n"
+#                                    f"Provide detailed suggestions with serving sizes."}
+#     ]
+#     return get_food_suggestions(messages)
+# 
+# #inputs from the user
+# print("Enter your nutritional targets:")
+# calories = int(input("Calories (kcal): "))
+# protein = int(input("Protein (grams): "))
+# fat = int(input("Fat (grams): "))
+# carbs = int(input("Carbs (grams): "))
+# 
+# print("Enter foods to exclude (comma-separated):")
+# excluded_foods = set(input().split(','))
+# 
+# #meal targets dictionary
+# meal_targets = {
+#     "calories": calories,
+#     "protein": protein,
+#     "fat": fat,
+#     "carbs": carbs
+# }
+# 
+# #query the llm (gpt api)
+# print("\nQuerying the LLM for meal suggestions...")
+# suggestion = optimize_food_for_meal_llm(meal_targets, excluded_foods)
+# 
+# #output the suggestion
+# print("\nSuggested Meal:")
+# print(suggestion)
+
+
+
+
+
+
+
+
+
+import google.generativeai as genai
 import os
-import openai
-from dotenv import load_dotenv #for the .env folder with the api key 
-load_dotenv()
 
-openai.api_key = os.getenv("OPENAI_API_KEY")
+# os.environ["API_KEY"] = 'AIzaSyCM37EVPpQOWU-riebyM255Rlx_QNrhgp8'
+# genai.configure(api_key=os.environ["API_KEY"])
 
-def get_food_suggestions(messages):
-    #use chat gpt api for food suggestions 
-    try:
-        response = openai.chat.completions.create(
-            model="gpt-4o",  #gpt-4 model
-            messages=messages,
-            max_tokens=150,
-            temperature=0.7
+# model = genai.GenerativeModel('gemini-1.5-flash-latest')
+# response = model.generate_content("give me a meal suggestion for lunch")
+# print(response.text)
+
+import pandas as pd
+import numpy as np
+
+# Load the combined meal dataset
+combined_file = "meals_with_combined_nutrition.xlsx"
+meals_df = pd.read_excel(combined_file)
+
+# Ensure the health score column exists or create one
+if "Health Score" not in meals_df.columns:
+    def calculate_health_score(row):
+        penalties = (
+            row.get("sugars_100g", 0) * 2 +
+            row.get("saturated-fat_100g", 0) * 3 +
+            row.get("sodium_100g", 0) / 1000
         )
-        return response.choices[0].message
-    except Exception as e:
-        return f"Error querying the API: {str(e)}"
+        rewards = (
+            row.get("fiber_100g", 0) * 2 +
+            row.get("proteins_100g", 0) * 1.5 +
+            row.get("vitamin-c_100g", 0)
+        )
+        return rewards - penalties
 
-def optimize_food_for_meal_llm(meal_targets, excluded_foods):
-    #suggest meal that matches nutritional targets of the user (inclduing exlcuding certain foods the user does not want)
-    messages = [
-        {"role": "system", "content": "You are a helpful assistant that suggests meals based on nutritional targets and preferences."},
-        {"role": "user", "content": f"Suggest a meal that matches the following nutritional targets:\n"
-                                   f"- Calories: {meal_targets['calories']} kcal\n"
-                                   f"- Protein: {meal_targets['protein']} grams\n"
-                                   f"- Fat: {meal_targets['fat']} grams\n"
-                                   f"- Carbs: {meal_targets['carbs']} grams\n"
-                                   f"Exclude the following foods: {', '.join(excluded_foods)}.\n"
-                                   f"Provide detailed suggestions with serving sizes."}
-    ]
-    return get_food_suggestions(messages)
+    meals_df["Health Score"] = meals_df.apply(calculate_health_score, axis=1)
+    min_score = meals_df["Health Score"].min()
+    max_score = meals_df["Health Score"].max()
+    meals_df["Health Score"] = (meals_df["Health Score"] - min_score) / (max_score - min_score) * 100
 
-#inputs from the user
-print("Enter your nutritional targets:")
-calories = int(input("Calories (kcal): "))
-protein = int(input("Protein (grams): "))
-fat = int(input("Fat (grams): "))
-carbs = int(input("Carbs (grams): "))
+# User-defined meal preferences
+total_calories = float(input("Enter your total daily calorie target: "))
+total_protein = float(input("Enter your total daily protein target (g): "))
+total_fat = float(input("Enter your total daily fat target (g): "))
+total_carbs = float(input("Enter your total daily carbohydrate target (g): "))
+num_breakfast = int(input("Enter the number of breakfast items: "))
+num_lunch = int(input("Enter the number of lunch items: "))
+num_dinner = int(input("Enter the number of dinner items: "))
 
-print("Enter foods to exclude (comma-separated):")
-excluded_foods = set(input().split(','))
-
-#meal targets dictionary
+# Define meal targets
 meal_targets = {
-    "calories": calories,
-    "protein": protein,
-    "fat": fat,
-    "carbs": carbs
+    "Breakfast": {"calories": total_calories * 0.3 / num_breakfast, "protein": total_protein * 0.3 / num_breakfast, "fat": total_fat * 0.3 / num_breakfast, "carbs": total_carbs * 0.3 / num_breakfast},
+    "Lunch": {"calories": total_calories * 0.4 / num_lunch, "protein": total_protein * 0.4 / num_lunch, "fat": total_fat * 0.4 / num_lunch, "carbs": total_carbs * 0.4 / num_lunch},
+    "Dinner": {"calories": total_calories * 0.3 / num_dinner, "protein": total_protein * 0.3 / num_dinner, "fat": total_fat * 0.3 / num_dinner, "carbs": total_carbs * 0.3 / num_dinner},
 }
 
-#query the llm (gpt api)
-print("\nQuerying the LLM for meal suggestions...")
-suggestion = optimize_food_for_meal_llm(meal_targets, excluded_foods)
+# Save original input targets
+original_targets = {
+    "calories": total_calories,
+    "protein": total_protein,
+    "fat": total_fat,
+    "carbs": total_carbs,
+}
 
-#output the suggestion
-print("\nSuggested Meal:")
-print(suggestion)
+# Realistic serving sizes
+serving_fractions = [1, 0.5, 0.33, 0.25]
+
+# Function to optimize single food per meal
+def optimize_food_for_meal(meal_targets, excluded_foods):
+    best_food = None
+    best_score = float("inf")
+    best_serving = None
+
+    for index, food in meals_df.iterrows():
+        if food["Meal Name"] in excluded_foods:
+            continue
+
+        for fraction in serving_fractions:
+            quantity = fraction * 100  # Scale to 100g servings
+            total_calories = quantity * food["energy-kcal_100g"] / 100
+            total_protein = quantity * food["proteins_100g"] / 100
+            total_fat = quantity * food["fat_100g"] / 100
+            total_carbs = quantity * food["carbohydrates_100g"] / 100
+
+            deviation = (
+                (total_calories - meal_targets["calories"]) ** 2 +
+                (total_protein - meal_targets["protein"]) ** 2 +
+                (total_fat - meal_targets["fat"]) ** 2 +
+                (total_carbs - meal_targets["carbs"]) ** 2
+            )
+            score = deviation - food["Health Score"]
+
+            if score < best_score:
+                best_score = score
+                best_food = food
+                best_serving = fraction
+
+    return best_food, best_serving
+
+# gen AI
+def gen_AI(prompt):
+    os.environ["API_KEY"] = 'AIzaSyCM37EVPpQOWU-riebyM255Rlx_QNrhgp8'
+    genai.configure(api_key=os.environ["API_KEY"])
+
+    model = genai.GenerativeModel('gemini-1.5-flash-latest')
+    response = model.generate_content(prompt)
+    print(response.text)
+
+# Optimize meals
+optimized_meals = {}
+excluded_foods = set()
+overall_totals = {"calories": 0, "protein": 0, "fat": 0, "carbs": 0}
+
+for meal_name, targets in meal_targets.items():
+    print(f"\nOptimizing {meal_name}...")
+    optimized_meals[meal_name] = []
+    for _ in range(num_breakfast if meal_name == "Breakfast" else (num_lunch if meal_name == "Lunch" else num_dinner)):
+        best_food, best_serving = optimize_food_for_meal(targets, excluded_foods)
+        if best_food is not None:
+            total_calories = best_food["energy-kcal_100g"] * best_serving
+            total_protein = best_food["proteins_100g"] * best_serving
+            total_fat = best_food["fat_100g"] * best_serving
+            total_carbs = best_food["carbohydrates_100g"] * best_serving
+
+            # Update overall totals
+            overall_totals["calories"] += total_calories
+            overall_totals["protein"] += total_protein
+            overall_totals["fat"] += total_fat
+            overall_totals["carbs"] += total_carbs
+
+            optimized_meals[meal_name].append({
+                "food_name": best_food["Meal Name"],
+                "serving": best_serving,
+                "quantity": best_serving * 100,
+                "energy": total_calories,
+                "protein": total_protein,
+                "fat": total_fat,
+                "carbs": total_carbs,
+                "ingredients": best_food["Ingredients (MealDB)"]
+            })
+            excluded_foods.add(best_food["Meal Name"])
+
+# Calculate match percentages using original targets
+calories_match = max(0, 100 - abs(overall_totals["calories"] - original_targets["calories"]) / original_targets["calories"] * 100)
+protein_match = max(0, 100 - abs(overall_totals["protein"] - original_targets["protein"]) / original_targets["protein"] * 100)
+fat_match = max(0, 100 - abs(overall_totals["fat"] - original_targets["fat"]) / original_targets["fat"] * 100)
+carbs_match = max(0, 100 - abs(overall_totals["carbs"] - original_targets["carbs"]) / original_targets["carbs"] * 100)
+
+overall_match_percentage = (calories_match + protein_match + fat_match + carbs_match) / 4
+
+if overall_match_percentage < 70:
+
+    prompt = f"""
+    
+    You are a meal planning assistant. The user's original targets were:
+    - Total Calories: {original_targets['calories']} kcal
+    - Protein: {original_targets['protein']} g
+    - Fat: {original_targets['fat']} g
+    - Carbohydrates: {original_targets['carbs']} g
+    
+    You are required provide them with meal suggestions that accomodates with their constraints.
+    
+    Give {num_breakfast} meal suggestion for Breakfast.
+    Give {num_lunch} meal suggestion for Lunch.
+    Give {num_dinner} meal suggestion for Dinner. 
+    
+    If the meal name appears more than once, then give different suggestions for as many as it appears.
+     
+    Structure your response in this format:
+    " 
+    (meal name): 
+    Food: <Food Name>
+    Ingredients: <List of Ingredients>
+    Serving: <Number of Servings>
+    Quantity: <Quantity in grams>
+    Energy: <Energy in kcal>
+    Protein: <Protein in grams>
+    Fat: <Fat in grams>
+    Carbs: <Carbs in grams>
+    "
+    
+    After you have given a suggest for every meal then calculate and give the overall totals in this format.
+    "Overall Totals:
+    Calories: <Total Calories in kcal>
+    Protein: <Total Protein in grams>
+    Fat: <Total Fat in grams>
+    Carbs: <Total Carbs in grams>
+
+    Overall Match Percentage: <Percentage>%
+    "
+    You output should only include the instruction given inside the quotations. Keep the response consise.
+    """
+
+    print("\nProcessing Gen-AI..")
+    print(gen_AI(prompt))
+
+else: 
+    # Print results
+    for meal_name, foods in optimized_meals.items():
+        print(f"\n{meal_name}:")
+        for food in foods:
+            print(f"  Food: {food['food_name']}")
+            print(f"  Ingredients: {food['ingredients']}")
+            print(f"  Serving: {food['serving']}x")
+            print(f"  Quantity: {food['quantity']:.2f} g")
+            print(f"  Energy: {food['energy']:.2f} kcal")
+            print(f"  Protein: {food['protein']:.2f} g")
+            print(f"  Fat: {food['fat']:.2f} g")
+            print(f"  Carbs: {food['carbs']:.2f} g")
+
+    print("\nOverall Totals:")
+    print(f"  Calories: {overall_totals['calories']:.2f} kcal")
+    print(f"  Protein: {overall_totals['protein']:.2f} g")
+    print(f"  Fat: {overall_totals['fat']:.2f} g")
+    print(f"  Carbs: {overall_totals['carbs']:.2f} g")
+
+
+    # Print the overall match percentage
+    print(f"\nOverall Match Percentage: {overall_match_percentage:.2f}%")
+
+
+
+
+
+
+
+
