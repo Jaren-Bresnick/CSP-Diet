@@ -252,9 +252,9 @@ if overall_match_percentage < 70:
     Fat: <Total Fat in grams>
     Carbs: <Total Carbs in grams>
 
-    Overall Match Percentage: <Percentage>%
+    Overall Match Percentage: (Total Calories from all the meals + Total protein from all the meals + Total Fat from all the meals + Total Carbs from all the meals)/4 in percentage (do not show the calculation, only give the answer)
     "
-    You output should only include the instruction given inside the quotations. Keep the response consise.
+    You output should only include the instruction given inside the quotations. Keep the response concise.
     """
 
     print("\nProcessing Gen-AI..")
