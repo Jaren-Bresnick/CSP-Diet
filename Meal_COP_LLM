@@ -1,0 +1,60 @@
+
+import os
+import openai
+from dotenv import load_dotenv #for the .env folder with the api key 
+load_dotenv()
+
+openai.api_key = os.getenv("OPENAI_API_KEY")
+
+def get_food_suggestions(messages):
+    #use chat gpt api for food suggestions 
+    try:
+        response = openai.chat.completions.create(
+            model="gpt-4o",  #gpt-4 model
+            messages=messages,
+            max_tokens=150,
+            temperature=0.7
+        )
+        return response.choices[0].message
+    except Exception as e:
+        return f"Error querying the API: {str(e)}"
+
+def optimize_food_for_meal_llm(meal_targets, excluded_foods):
+    #suggest meal that matches nutritional targets of the user (inclduing exlcuding certain foods the user does not want)
+    messages = [
+        {"role": "system", "content": "You are a helpful assistant that suggests meals based on nutritional targets and preferences."},
+        {"role": "user", "content": f"Suggest a meal that matches the following nutritional targets:\n"
+                                   f"- Calories: {meal_targets['calories']} kcal\n"
+                                   f"- Protein: {meal_targets['protein']} grams\n"
+                                   f"- Fat: {meal_targets['fat']} grams\n"
+                                   f"- Carbs: {meal_targets['carbs']} grams\n"
+                                   f"Exclude the following foods: {', '.join(excluded_foods)}.\n"
+                                   f"Provide detailed suggestions with serving sizes."}
+    ]
+    return get_food_suggestions(messages)
+
+#inputs from the user
+print("Enter your nutritional targets:")
+calories = int(input("Calories (kcal): "))
+protein = int(input("Protein (grams): "))
+fat = int(input("Fat (grams): "))
+carbs = int(input("Carbs (grams): "))
+
+print("Enter foods to exclude (comma-separated):")
+excluded_foods = set(input().split(','))
+
+#meal targets dictionary
+meal_targets = {
+    "calories": calories,
+    "protein": protein,
+    "fat": fat,
+    "carbs": carbs
+}
+
+#query the llm (gpt api)
+print("\nQuerying the LLM for meal suggestions...")
+suggestion = optimize_food_for_meal_llm(meal_targets, excluded_foods)
+
+#output the suggestion
+print("\nSuggested Meal:")
+print(suggestion)
