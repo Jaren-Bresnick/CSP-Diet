@@ -92,6 +92,10 @@ if "Health Score" not in meals_df.columns:
             row.get("saturated-fat_100g", 0) * 3 +
             row.get("sodium_100g", 0) / 1000
         )
+        print("sugars: " + str(row.get("sugars_100g", 0)))
+        print("fat: " + str(row.get("saturated-fat_100g", 0)))
+        print("sodium: " + str(row.get("sodium_100g", 0)))
+
         rewards = (
             row.get("fiber_100g", 0) * 2 +
             row.get("proteins_100g", 0) * 1.5 +

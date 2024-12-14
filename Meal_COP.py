@@ -1,25 +1,26 @@
 import pandas as pd
 import numpy as np
 
-# Load the combined meal dataset
+#Load the combined meal dataset
 combined_file = "meals_with_combined_nutrition.xlsx"
 meals_df = pd.read_excel(combined_file)
 
-# Ensure the health score column exists or create one
-if "Health Score" not in meals_df.columns:
-    def calculate_health_score(row):
-        penalties = (
-            row.get("sugars_100g", 0) * 2 +
-            row.get("saturated-fat_100g", 0) * 3 +
-            row.get("sodium_100g", 0) / 1000
-        )
-        rewards = (
-            row.get("fiber_100g", 0) * 2 +
-            row.get("proteins_100g", 0) * 1.5 +
-            row.get("vitamin-c_100g", 0)
-        )
-        return rewards - penalties
+def calculate_health_score(row):
+    penalties = (
+        row.get("sugars_100g", 0) * 2 +
+        row.get("saturated-fat_100g", 0) * 3 +
+        row.get("sodium_100g", 0) / 1000
+    )
+    print(row.get("sugars_100g", 0))
+    rewards = (
+        row.get("fiber_100g", 0) * 2 +
+        row.get("proteins_100g", 0) * 1.5 +
+        row.get("vitamin-c_100g", 0)
+    )
+    return rewards - penalties
 
+#make a health score column for optimization
+if "Health Score" not in meals_df.columns:
     meals_df["Health Score"] = meals_df.apply(calculate_health_score, axis=1)
     min_score = meals_df["Health Score"].min()
     max_score = meals_df["Health Score"].max()
