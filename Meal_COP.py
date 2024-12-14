@@ -35,6 +35,11 @@ num_breakfast = int(input("Enter the number of breakfast items: "))
 num_lunch = int(input("Enter the number of lunch items: "))
 num_dinner = int(input("Enter the number of dinner items: "))
 
+#Allergies
+print("Any Allergies?")
+#lowercase and comma delimited
+allergies = set(input().lower().split(','))
+
 # Define meal targets
 meal_targets = {
     "Breakfast": {"calories": total_calories * 0.3 / num_breakfast, "protein": total_protein * 0.3 / num_breakfast, "fat": total_fat * 0.3 / num_breakfast, "carbs": total_carbs * 0.3 / num_breakfast},
@@ -54,13 +59,18 @@ original_targets = {
 serving_fractions = [1, 0.5, 0.33, 0.25]
 
 # Function to optimize single food per meal
-def optimize_food_for_meal(meal_targets, excluded_foods):
+def optimize_food_for_meal(meal_targets, excluded_foods, allergies):
     best_food = None
     best_score = float("inf")
     best_serving = None
 
     for index, food in meals_df.iterrows():
         if food["Meal Name"] in excluded_foods:
+            continue
+
+        # Check for allergies
+        ingredients = str(food["Ingredients (MealDB)"]).lower()
+        if any(allergen in ingredients for allergen in allergies):
             continue
 
         for fraction in serving_fractions:
@@ -94,7 +104,7 @@ for meal_name, targets in meal_targets.items():
     print(f"\nOptimizing {meal_name}...")
     optimized_meals[meal_name] = []
     for _ in range(num_breakfast if meal_name == "Breakfast" else (num_lunch if meal_name == "Lunch" else num_dinner)):
-        best_food, best_serving = optimize_food_for_meal(targets, excluded_foods)
+        best_food, best_serving = optimize_food_for_meal(targets, excluded_foods, allergies)
         if best_food is not None:
             total_calories = best_food["energy-kcal_100g"] * best_serving
             total_protein = best_food["proteins_100g"] * best_serving

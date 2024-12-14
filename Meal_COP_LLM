@@ -67,15 +67,15 @@
 import google.generativeai as genai
 import os
 from dotenv import load_dotenv #for the .env folder with the api key 
-load_dotenv()
+load_dotenv() #protect sensitive info
 import pandas as pd
 import numpy as np
 
-# Load the combined meal dataset
+#combined meal dataset with recipes and nutritional info on ingredients
 combined_file = "meals_with_combined_nutrition.xlsx"
 meals_df = pd.read_excel(combined_file)
 
-# Ensure the health score column exists or create one
+#make the health score column
 if "Health Score" not in meals_df.columns:
     def calculate_health_score(row):
         penalties = (
@@ -83,9 +83,9 @@ if "Health Score" not in meals_df.columns:
             row.get("saturated-fat_100g", 0) * 3 +
             row.get("sodium_100g", 0) / 1000
         )
-        print("sugars: " + str(row.get("sugars_100g", 0)))
-        print("fat: " + str(row.get("saturated-fat_100g", 0)))
-        print("sodium: " + str(row.get("sodium_100g", 0)))
+        # print("sugars: " + str(row.get("sugars_100g", 0)))
+        # print("fat: " + str(row.get("saturated-fat_100g", 0)))
+        # print("sodium: " + str(row.get("sodium_100g", 0)))
 
         rewards = (
             row.get("fiber_100g", 0) * 2 +
@@ -95,6 +95,8 @@ if "Health Score" not in meals_df.columns:
         return rewards - penalties
 
     meals_df["Health Score"] = meals_df.apply(calculate_health_score, axis=1)
+
+    #normalize the health score
     min_score = meals_df["Health Score"].min()
     max_score = meals_df["Health Score"].max()
     meals_df["Health Score"] = (meals_df["Health Score"] - min_score) / (max_score - min_score) * 100
@@ -107,6 +109,11 @@ total_carbs = float(input("Enter your total daily carbohydrate target (g): "))
 num_breakfast = int(input("Enter the number of breakfast items: "))
 num_lunch = int(input("Enter the number of lunch items: "))
 num_dinner = int(input("Enter the number of dinner items: "))
+
+#Allergies
+print("Any Allergies?")
+#lowercase and comma delimited
+allergies = set(input().lower().split(','))
 
 # Define meal targets
 meal_targets = {
@@ -127,13 +134,18 @@ original_targets = {
 serving_fractions = [1, 0.5, 0.33, 0.25]
 
 # Function to optimize single food per meal
-def optimize_food_for_meal(meal_targets, excluded_foods):
+def optimize_food_for_meal(meal_targets, excluded_foods, allergies):
     best_food = None
     best_score = float("inf")
     best_serving = None
 
     for index, food in meals_df.iterrows():
         if food["Meal Name"] in excluded_foods:
+            continue
+        
+        # Check for allergies
+        ingredients = str(food["Ingredients (MealDB)"]).lower()
+        if any(allergen in ingredients for allergen in allergies):
             continue
 
         for fraction in serving_fractions:
@@ -176,7 +188,7 @@ for meal_name, targets in meal_targets.items():
     print(f"\nOptimizing {meal_name}...")
     optimized_meals[meal_name] = []
     for _ in range(num_breakfast if meal_name == "Breakfast" else (num_lunch if meal_name == "Lunch" else num_dinner)):
-        best_food, best_serving = optimize_food_for_meal(targets, excluded_foods)
+        best_food, best_serving = optimize_food_for_meal(targets, excluded_foods, allergies)
         if best_food is not None:
             total_calories = best_food["energy-kcal_100g"] * best_serving
             total_protein = best_food["proteins_100g"] * best_serving
