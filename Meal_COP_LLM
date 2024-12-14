@@ -64,19 +64,10 @@
 
 
 
-
-
-
 import google.generativeai as genai
 import os
-
-# os.environ["API_KEY"] = 'AIzaSyCM37EVPpQOWU-riebyM255Rlx_QNrhgp8'
-# genai.configure(api_key=os.environ["API_KEY"])
-
-# model = genai.GenerativeModel('gemini-1.5-flash-latest')
-# response = model.generate_content("give me a meal suggestion for lunch")
-# print(response.text)
-
+from dotenv import load_dotenv #for the .env folder with the api key 
+load_dotenv()
 import pandas as pd
 import numpy as np
 
@@ -167,10 +158,10 @@ def optimize_food_for_meal(meal_targets, excluded_foods):
 
     return best_food, best_serving
 
-# gen AI
+# Gen AI (LLM)
 def gen_AI(prompt):
-    os.environ["API_KEY"] = 'AIzaSyCM37EVPpQOWU-riebyM255Rlx_QNrhgp8'
-    genai.configure(api_key=os.environ["API_KEY"])
+    gemini_api_key = os.getenv("GEMINI_API_KEY")
+    genai.configure(api_key=gemini_api_key)
 
     model = genai.GenerativeModel('gemini-1.5-flash-latest')
     response = model.generate_content(prompt)
@@ -256,9 +247,22 @@ if overall_match_percentage < 70:
     Fat: <Total Fat in grams>
     Carbs: <Total Carbs in grams>
 
-    Overall Match Percentage: (Total Calories from all the meals + Total protein from all the meals + Total Fat from all the meals + Total Carbs from all the meals)/4 in percentage (do not show the calculation, only give the answer)
-    "
-    You output should only include the instruction given inside the quotations. Keep the response concise.
+    
+
+    The match percentage should be calculated by comparing the actual values (e.g., calories, protein, fat, and carbs) with the target values provided by the user. The formula should calculate the percentage difference for each category as follows:
+
+    Match Percentage for each category = (1 - |(Actual Value - Target Value) / Target Value|) * 100
+
+    For each category:
+    If the match percentage is below 0%, set it to 0%.
+    If the match percentage exceeds 100%, set it to 0%.
+    Then calculate the overall match percentage by averaging the match percentages of all categories. Here are the input values:
+
+    Show intermediate steps in the output and provide the final result for the overall match percentage.
+    Try to keep the overall totals as close to the user's original targets as possible. 
+    Make sure the overall match percentage is greater than 70%.
+
+    Your output should only include the instruction given inside the quotations. Keep the response concise.
     """
 
     print("\nProcessing Gen-AI..")
@@ -285,8 +289,8 @@ else:
     print(f"  Carbs: {overall_totals['carbs']:.2f} g")
 
 
-    # Print the overall match percentage
-    print(f"\nOverall Match Percentage: {overall_match_percentage:.2f}%")
+    # # Print the overall match percentage
+    # print(f"\nOverall Match Percentage: {overall_match_percentage:.2f}%")
 
 
 
