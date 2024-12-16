@@ -13,8 +13,6 @@ important_columns = [
     "sodium_100g", "fiber_100g", "vitamin-c_100g"
 ]
 
-# existing_meal_names = set(meal_df["Meal Name"].dropna().unique())
-# limited_meal_names = list(existing_meal_names)[-150:]
 
 def gen_ai(prompt):
     gemini_api_key = os.getenv("GEMINI_API_KEY")
@@ -24,7 +22,9 @@ def gen_ai(prompt):
     response = model.generate_content(prompt)
     return(response.text)
 
-# meal_names_str = ", ".join(limited_meal_names)
+
+# generated meal names using chat GPT
+
 breakfast_meals = [
     "Avocado Toast with Poached Egg", "Spinach and Feta Omelette", "Blueberry Oatmeal Pancakes",
     "Greek Yogurt with Honey and Berries", "Banana Peanut Butter Smoothie Bowl",
@@ -75,7 +75,6 @@ breakfast_meals = [
     "Lemon Blueberry Scones", "Chorizo and Egg Breakfast Tacos",
     "Pesto and Mozzarella Omelette", "Cinnamon Swirl Breakfast Bread"
 ]
-
 lunch_dinner_meals = [
     "Grilled Chicken Caesar Salad", "Beef Stroganoff with Egg Noodles", "Teriyaki Salmon with Steamed Rice",
     "Vegetarian Lentil Curry", "Spaghetti Carbonara", "Chicken Alfredo Pasta", "Sweet and Sour Pork",
@@ -146,7 +145,6 @@ lunch_dinner_meals = [
     "Seared Scallops with Lemon Butter", "Moroccan Couscous with Vegetables",
     "Beef Tostadas with Guacamole", "Classic Chicken Piccata"
 ]
-
 soups_and_stews_meals = [
     "Classic Chicken Noodle Soup",
     "Beef and Barley Stew",
@@ -199,7 +197,6 @@ soups_and_stews_meals = [
     "Pork and Cabbage Stew",
     "Ham and Bean Soup"
 ]
-
 salad_meals = [
     "Classic Caesar Salad",
     "Greek Salad with Feta and Olives",
@@ -303,7 +300,6 @@ if generated_response:
         for line in meal.split("\n"):
             if line.startswith("- Meal Name:"):
                 meal_name = line.split(":")[1].strip()
-                print(meal_name)
             if line.startswith("- Ingredients (MealDB)"):
                 ingredients = line.split(":")[1].strip()
             if line.startswith("- energy-kcal_100g"):
