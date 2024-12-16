@@ -204,7 +204,7 @@ if overall_match_percentage < 70:
     If the match percentage exceeds 100%, set it to 0%.
     Then calculate the overall match percentage by averaging the match percentages of all categories. Here are the input values:
 
-    Show intermediate steps in the output and provide the final result for the overall match percentage.
+    Do not show intermediate steps in the output and provide the final result for the overall match percentage.
     Try to keep the overall totals as close to the user's original targets as possible. 
     Make sure the overall match percentage is greater than 70%.
 
