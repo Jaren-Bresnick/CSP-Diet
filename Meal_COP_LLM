@@ -9,6 +9,11 @@ import numpy as np
 combined_file = "meals_with_combined_nutrition_LLM_data.xlsx"
 meals_df = pd.read_excel(combined_file)
 
+columns = ["energy-kcal_100g", "proteins_100g", "fat_100g", "carbohydrates_100g",
+                   "sugars_100g", "saturated-fat_100g", "sodium_100g", "fiber_100g", "vitamin-c_100g"]
+for col in columns:
+    meals_df[col] = pd.to_numeric(meals_df[col], errors="coerce")
+
 #make the health score column
 if "Health Score" not in meals_df.columns:
     def calculate_health_score(row):
