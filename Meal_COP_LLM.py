@@ -14,8 +14,8 @@ if "Health Score" not in meals_df.columns:
     def calculate_health_score(row):
         penalties = (
             row.get("sugars_100g", 0) * 2 +
-            row.get("saturated-fat_100g", 0) * 3 +
-            row.get("sodium_100g", 0) / 1000
+            row.get("saturated-fat_100g", 0) * 2 +
+            row.get("sodium_100g", 0) * 2
         )
         # print("sugars: " + str(row.get("sugars_100g", 0)))
         # print("fat: " + str(row.get("saturated-fat_100g", 0)))
@@ -23,8 +23,8 @@ if "Health Score" not in meals_df.columns:
 
         rewards = (
             row.get("fiber_100g", 0) * 2 +
-            row.get("proteins_100g", 0) * 1.5 +
-            row.get("vitamin-c_100g", 0)
+            row.get("proteins_100g", 0) * 2 +
+            row.get("vitamin-c_100g", 0) * 2
         )
         return rewards - penalties
 
