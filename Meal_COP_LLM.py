@@ -6,7 +6,7 @@ import pandas as pd
 import numpy as np
 
 #combined meal dataset with recipes and nutritional info on ingredients
-combined_file = "meals_with_combined_nutrition.xlsx"
+combined_file = "meals_with_combined_nutrition_LLM_data.xlsx"
 meals_df = pd.read_excel(combined_file)
 
 #make the health score column
