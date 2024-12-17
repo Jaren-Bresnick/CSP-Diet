@@ -6,21 +6,16 @@ import pandas as pd
 import numpy as np
 
 #combined meal dataset with recipes and nutritional info on ingredients
-combined_file = "meals_with_combined_nutrition_LLM_data.xlsx"
+combined_file = "meals_with_combined_nutrition.xlsx"
 meals_df = pd.read_excel(combined_file)
-
-columns = ["energy-kcal_100g", "proteins_100g", "fat_100g", "carbohydrates_100g",
-                   "sugars_100g", "saturated-fat_100g", "sodium_100g", "fiber_100g", "vitamin-c_100g"]
-for col in columns:
-    meals_df[col] = pd.to_numeric(meals_df[col], errors="coerce")
 
 #make the health score column
 if "Health Score" not in meals_df.columns:
     def calculate_health_score(row):
         penalties = (
             row.get("sugars_100g", 0) * 2 +
-            row.get("saturated-fat_100g", 0) * 3 +
-            row.get("sodium_100g", 0) / 1000
+            row.get("saturated-fat_100g", 0) * 2 +
+            row.get("sodium_100g", 0) * 2
         )
         # print("sugars: " + str(row.get("sugars_100g", 0)))
         # print("fat: " + str(row.get("saturated-fat_100g", 0)))
@@ -28,8 +23,8 @@ if "Health Score" not in meals_df.columns:
 
         rewards = (
             row.get("fiber_100g", 0) * 2 +
-            row.get("proteins_100g", 0) * 1.5 +
-            row.get("vitamin-c_100g", 0)
+            row.get("proteins_100g", 0) * 2 +
+            row.get("vitamin-c_100g", 0) * 2
         )
         return rewards - penalties
 
@@ -110,13 +105,13 @@ def optimize_food_for_meal(meal_targets, excluded_foods, allergies):
     return best_food, best_serving
 
 # Gen AI (LLM)
-# def gen_AI(prompt):
-#     gemini_api_key = os.getenv("GEMINI_API_KEY")
-#     genai.configure(api_key=gemini_api_key)
-#
-#     model = genai.GenerativeModel('gemini-1.5-flash-latest')
-#     response = model.generate_content(prompt)
-#     print(response.text)
+def gen_AI(prompt):
+    gemini_api_key = os.getenv("GEMINI_API_KEY")
+    genai.configure(api_key=gemini_api_key)
+
+    model = genai.GenerativeModel('gemini-1.5-flash-latest')
+    response = model.generate_content(prompt)
+    print(response.text)
 
 # Optimize meals
 optimized_meals = {}
@@ -160,88 +155,88 @@ carbs_match = max(0, 100 - abs(overall_totals["carbs"] - original_targets["carbs
 
 overall_match_percentage = (calories_match + protein_match + fat_match + carbs_match) / 4
 
-# if overall_match_percentage < 70:
-#
-#     prompt = f"""
-#
-#     You are a meal planning assistant. The user's original targets were:
-#     - Total Calories: {original_targets['calories']} kcal
-#     - Protein: {original_targets['protein']} g
-#     - Fat: {original_targets['fat']} g
-#     - Carbohydrates: {original_targets['carbs']} g
-#
-#     You are required provide them with meal suggestions that accomodates with their constraints.
-#
-#     Give {num_breakfast} meal suggestion for Breakfast.
-#     Give {num_lunch} meal suggestion for Lunch.
-#     Give {num_dinner} meal suggestion for Dinner.
-#
-#     If the meal name appears more than once, then give different suggestions for as many as it appears.
-#
-#     Structure your response in this format:
-#     "
-#     (meal name):
-#     Food: <Food Name>
-#     Ingredients: <List of Ingredients>
-#     Serving: <Number of Servings>
-#     Quantity: <Quantity in grams>
-#     Energy: <Energy in kcal>
-#     Protein: <Protein in grams>
-#     Fat: <Fat in grams>
-#     Carbs: <Carbs in grams>
-#     "
-#
-#     After you have given a suggest for every meal then calculate and give the overall totals in this format.
-#     "Overall Totals:
-#     Calories: <Total Calories in kcal>
-#     Protein: <Total Protein in grams>
-#     Fat: <Total Fat in grams>
-#     Carbs: <Total Carbs in grams>
-#
-#
-#
-#     The match percentage should be calculated by comparing the actual values (e.g., calories, protein, fat, and carbs) with the target values provided by the user. The formula should calculate the percentage difference for each category as follows:
-#
-#     Match Percentage for each category = (1 - |(Actual Value - Target Value) / Target Value|) * 100
-#
-#     For each category:
-#     If the match percentage is below 0%, set it to 0%.
-#     If the match percentage exceeds 100%, set it to 0%.
-#     Then calculate the overall match percentage by averaging the match percentages of all categories. Here are the input values:
-#
-#     Show intermediate steps in the output and provide the final result for the overall match percentage.
-#     Try to keep the overall totals as close to the user's original targets as possible.
-#     Make sure the overall match percentage is greater than 70%.
-#
-#     Your output should only include the instruction given inside the quotations. Keep the response concise.
-#     """
-#
-#     print("\nProcessing Gen-AI..")
-#     print(gen_AI(prompt))
-#
-# else:
+if overall_match_percentage < 70:
+
+    prompt = f"""
+    
+    You are a meal planning assistant. The user's original targets were:
+    - Total Calories: {original_targets['calories']} kcal
+    - Protein: {original_targets['protein']} g
+    - Fat: {original_targets['fat']} g
+    - Carbohydrates: {original_targets['carbs']} g
+    
+    You are required provide them with meal suggestions that accomodates with their constraints.
+    
+    Give {num_breakfast} meal suggestion for Breakfast.
+    Give {num_lunch} meal suggestion for Lunch.
+    Give {num_dinner} meal suggestion for Dinner. 
+    
+    If the meal name appears more than once, then give different suggestions for as many as it appears.
+     
+    Structure your response in this format:
+    " 
+    (meal name): 
+    Food: <Food Name>
+    Ingredients: <List of Ingredients>
+    Serving: <Number of Servings>
+    Quantity: <Quantity in grams>
+    Energy: <Energy in kcal>
+    Protein: <Protein in grams>
+    Fat: <Fat in grams>
+    Carbs: <Carbs in grams>
+    "
+    
+    After you have given a suggest for every meal then calculate and give the overall totals in this format.
+    "Overall Totals:
+    Calories: <Total Calories in kcal>
+    Protein: <Total Protein in grams>
+    Fat: <Total Fat in grams>
+    Carbs: <Total Carbs in grams>
+
+    
+
+    The match percentage should be calculated by comparing the actual values (e.g., calories, protein, fat, and carbs) with the target values provided by the user. The formula should calculate the percentage difference for each category as follows:
+
+    Match Percentage for each category = (1 - |(Actual Value - Target Value) / Target Value|) * 100
+
+    For each category:
+    If the match percentage is below 0%, set it to 0%.
+    If the match percentage exceeds 100%, set it to 0%.
+    Then calculate the overall match percentage by averaging the match percentages of all categories. Here are the input values:
+
+    Do not show intermediate steps in the output and provide the final result for the overall match percentage.
+    Try to keep the overall totals as close to the user's original targets as possible. 
+    Make sure the overall match percentage is greater than 70%.
+
+    Your output should only include the instruction given inside the quotations. Keep the response concise.
+    """
+
+    print("\nProcessing Gen-AI..")
+    print(gen_AI(prompt))
+
+else: 
     # Print results
-for meal_name, foods in optimized_meals.items():
-    print(f"\n{meal_name}:")
-    for food in foods:
-        print(f"  Food: {food['food_name']}")
-        print(f"  Ingredients: {food['ingredients']}")
-        print(f"  Serving: {food['serving']}x")
-        print(f"  Quantity: {food['quantity']:.2f} g")
-        print(f"  Energy: {food['energy']:.2f} kcal")
-        print(f"  Protein: {food['protein']:.2f} g")
-        print(f"  Fat: {food['fat']:.2f} g")
-        print(f"  Carbs: {food['carbs']:.2f} g")
+    for meal_name, foods in optimized_meals.items():
+        print(f"\n{meal_name}:")
+        for food in foods:
+            print(f"  Food: {food['food_name']}")
+            print(f"  Ingredients: {food['ingredients']}")
+            print(f"  Serving: {food['serving']}x")
+            print(f"  Quantity: {food['quantity']:.2f} g")
+            print(f"  Energy: {food['energy']:.2f} kcal")
+            print(f"  Protein: {food['protein']:.2f} g")
+            print(f"  Fat: {food['fat']:.2f} g")
+            print(f"  Carbs: {food['carbs']:.2f} g")
 
-print("\nOverall Totals:")
-print(f"  Calories: {overall_totals['calories']:.2f} kcal")
-print(f"  Protein: {overall_totals['protein']:.2f} g")
-print(f"  Fat: {overall_totals['fat']:.2f} g")
-print(f"  Carbs: {overall_totals['carbs']:.2f} g")
+    print("\nOverall Totals:")
+    print(f"  Calories: {overall_totals['calories']:.2f} kcal")
+    print(f"  Protein: {overall_totals['protein']:.2f} g")
+    print(f"  Fat: {overall_totals['fat']:.2f} g")
+    print(f"  Carbs: {overall_totals['carbs']:.2f} g")
 
 
-# # Print the overall match percentage
-# print(f"\nOverall Match Percentage: {overall_match_percentage:.2f}%")
+    # # Print the overall match percentage
+    # print(f"\nOverall Match Percentage: {overall_match_percentage:.2f}%")
 
 
 
