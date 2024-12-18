@@ -9,7 +9,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # Load the combined meal dataset with recipes and nutritional info
-combined_file = "meals_with_combined_nutrition_data_LLM_data.xlsx"
+combined_file = "meals_with_combined_nutrition_data.xlsx"
 meals_df = pd.read_excel(combined_file)
 
 # Ensure Health Score column exists

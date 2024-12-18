@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 
 #Load the combined meal dataset
-combined_file = "meals_with_combined_nutrition.xlsx"
+combined_file = "meals_with_combined_nutrition_LLM_data.xlsx"
 meals_df = pd.read_excel(combined_file)
 
 def calculate_health_score(row):
@@ -41,7 +41,7 @@ print("Any Allergies (write None if none)?")
 allergies = set(input().lower().split(','))
 
 #Vitamin Preference
-print("Enter a vitamin you prefer or write None if you are unsure (e.g., vitamin-c, vitamin-a):")
+print("Enter a vitamin you prefer (e.g., vitamin-c, vitamin-a):")
 pref_vitamin = input().lower()
 
 print(f"Enter your daily target for {pref_vitamin} (mg or IU) (80 is average):")
